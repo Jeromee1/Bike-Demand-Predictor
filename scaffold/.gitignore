@@ -13,6 +13,9 @@ scaffold/mlruns/
 .idea/
 .vscode/
 
+# Model binary (tracked via Xet storage)
+scaffold/models/champion.pkl
+
 # Secrets — NEVER commit tokens
 .env
 *.token
