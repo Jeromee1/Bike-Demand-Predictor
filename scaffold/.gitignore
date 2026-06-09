@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# MLflow (commit screenshots in MODEL_CARD.md instead if mlruns is large)
+# mlruns/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets — NEVER commit tokens
+.env
+*.token
