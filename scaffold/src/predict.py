@@ -8,16 +8,15 @@ predictions. Keep the signatures.
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
 
-from .train import CHAMPION_PATH
-
 
 @lru_cache(maxsize=1)
-def load_model(path: str = CHAMPION_PATH) -> Any:
+def load_model(path: str = str(Path(__file__).parent.parent / "models" / "champion.pkl")) -> Any:
     """Load and return the serialised champion model.
 
     Args:

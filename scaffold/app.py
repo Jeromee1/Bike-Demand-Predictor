@@ -48,7 +48,8 @@ def main() -> None:
         fig1 = px.bar(
             hourly, x="hr", y="cnt",
             labels={"hr": "Hour of day", "cnt": "Avg demand"},
-            title="Average hourly demand"
+            title="Average hourly demand",
+            color_discrete_sequence=['#7C3AED'],
         )
         fig1.update_layout(height=350)
         st.plotly_chart(fig1, use_container_width=True)
@@ -60,7 +61,8 @@ def main() -> None:
             trendline="ols",
             labels={"temp": "Normalized temperature", "cnt": "Hourly demand",
                     "weathersit": "Weather situation"},
-            title="Demand vs temperature by weather"
+            title="Demand vs temperature by weather",
+            color_discrete_sequence=['#7C3AED'],
         )
         fig2.update_layout(height=350)
         st.plotly_chart(fig2, use_container_width=True)
@@ -70,6 +72,7 @@ def main() -> None:
         fig3 = px.box(
             df, x="weathersit", y="cnt",
             labels={"weathersit": "Weather situation", "cnt": "Hourly demand"},
+            color_discrete_sequence=['#7C3AED'],
         )
         fig3.update_layout(height=350)
         st.plotly_chart(fig3, use_container_width=True)
