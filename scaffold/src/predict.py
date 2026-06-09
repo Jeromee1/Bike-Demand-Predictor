@@ -7,11 +7,16 @@ predictions. Keep the signatures.
 """
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any, Dict
+
+import numpy as np
+import pandas as pd
 
 from .train import CHAMPION_PATH
 
 
+@lru_cache(maxsize=1)
 def load_model(path: str = CHAMPION_PATH) -> Any:
     """Load and return the serialised champion model.
 
@@ -21,8 +26,9 @@ def load_model(path: str = CHAMPION_PATH) -> Any:
     Returns:
         The loaded model object.
     """
-    # TODO: implement (e.g. joblib.load). Consider caching with functools.lru_cache.
-    raise NotImplementedError
+    import joblib
+
+    return joblib.load(path)
 
 
 def predict(model: Any, inputs: Dict[str, Any]) -> float:
@@ -39,6 +45,27 @@ def predict(model: Any, inputs: Dict[str, Any]) -> float:
     Returns:
         Predicted total rentals (``cnt``) for the hour, as a non-negative float.
     """
-    # TODO: implement (build a 1-row frame matching training features, model.predict,
-    #       clamp to >= 0)
-    raise NotImplementedError
+    df = pd.DataFrame([inputs])
+
+    if "hr_sin" not in df.columns or "hr_cos" not in df.columns:
+        df["hr_sin"] = np.sin(2 * np.pi * df["hr"] / 24)
+        df["hr_cos"] = np.cos(2 * np.pi * df["hr"] / 24)
+    if "mnth_sin" not in df.columns or "mnth_cos" not in df.columns:
+        df["mnth_sin"] = np.sin(2 * np.pi * df["mnth"] / 12)
+        df["mnth_cos"] = np.cos(2 * np.pi * df["mnth"] / 12)
+    if "dayofweek" not in df.columns and "weekday" in df.columns:
+        df["dayofweek"] = df["weekday"]
+    if "is_weekend" not in df.columns and "dayofweek" in df.columns:
+        df["is_weekend"] = df["dayofweek"].isin([5, 6]).astype(int)
+
+    feature_cols = (
+        model.feature_names_in_.tolist()
+        if hasattr(model, "feature_names_in_")
+        else [c for c in df.columns if c != "dteday"]
+    )
+    for col in feature_cols:
+        if col not in df.columns:
+            df[col] = 0
+
+    pred = model.predict(df[feature_cols])[0]
+    return max(float(pred), 0.0)

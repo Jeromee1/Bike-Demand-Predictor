@@ -9,9 +9,16 @@ Run as a module:  ``python -m src.train``
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
+import joblib
+import mlflow
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from .data_prep import TARGET, add_features, load_and_clean
 
@@ -38,9 +45,55 @@ def train_and_log(df: pd.DataFrame, champion_path: str = CHAMPION_PATH) -> str:
     Returns:
         The path the champion was written to.
     """
-    # TODO: implement (sklearn models + metrics, mlflow.start_run / log_params / log_metrics
-    #       / log_model, joblib.dump). Create the models/ directory if needed.
-    raise NotImplementedError
+    y = df[TARGET]
+    X = df.drop(columns=[TARGET, "dteday"])
+
+    sort_idx = np.argsort(df["dteday"].values.astype(np.int64))
+    X = X.iloc[sort_idx].reset_index(drop=True)
+    y = y.iloc[sort_idx].reset_index(drop=True)
+
+    split_point = int(0.8 * len(X))
+    X_train, X_test = X.iloc[:split_point], X.iloc[split_point:]
+    y_train, y_test = y.iloc[:split_point], y.iloc[split_point:]
+
+    models = [
+        ("LinearRegression", LinearRegression(), {}),
+        (
+            "RandomForest",
+            RandomForestRegressor(n_estimators=100, random_state=42),
+            {"n_estimators": 100, "random_state": 42},
+        ),
+        (
+            "GradientBoosting",
+            GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=42),
+            {"n_estimators": 100, "learning_rate": 0.1, "random_state": 42},
+        ),
+    ]
+
+    Path(champion_path).parent.mkdir(parents=True, exist_ok=True)
+
+    champion = None
+    best_rmse = float("inf")
+
+    for name, model, params in models:
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+
+        rmse = float(np.sqrt(mean_squared_error(y_test, y_pred)))
+        mae = float(mean_absolute_error(y_test, y_pred))
+        r2 = float(r2_score(y_test, y_pred))
+
+        with mlflow.start_run(run_name=name):
+            mlflow.log_params(params)
+            mlflow.log_metrics({"RMSE": rmse, "MAE": mae, "R2": r2})
+            mlflow.sklearn.log_model(model, artifact_path="model")
+
+        if rmse < best_rmse:
+            best_rmse = rmse
+            champion = model
+
+    joblib.dump(champion, champion_path)
+    return str(Path(champion_path).resolve())
 
 
 def main(data_path: Optional[str] = None) -> str:
