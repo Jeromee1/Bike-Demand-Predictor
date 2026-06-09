@@ -6,7 +6,7 @@ venv/
 .pytest_cache/
 
 # MLflow (commit screenshots in MODEL_CARD.md instead if mlruns is large)
-# mlruns/
+scaffold/mlruns/
 
 # OS / editor
 .DS_Store
