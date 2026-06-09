@@ -58,7 +58,6 @@ def main() -> None:
     with col2:
         fig2 = px.scatter(
             df, x="temp", y="cnt", color="weathersit",
-            trendline="ols",
             labels={"temp": "Normalized temperature", "cnt": "Hourly demand",
                     "weathersit": "Weather situation"},
             title="Demand vs temperature by weather",
