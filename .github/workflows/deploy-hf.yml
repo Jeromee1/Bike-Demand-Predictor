@@ -34,12 +34,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install git-lfs and track model files
-        run: |
-          git lfs install
-          git lfs track "*.pkl"
-          git add .gitattributes
-
       - name: Push to the Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}        # secret -> never printed
